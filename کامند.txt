@@ -1,0 +1,7 @@
+pip install -r requirements.txt
+یا
+py -m pip install -r requirements.txt
+playwright install chromium
+
+python -m foxyvpn_py login
+python -m foxyvpn_py -v run --country DE --listen 127.0.0.1:1088
