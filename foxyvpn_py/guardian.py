@@ -10,6 +10,7 @@ from typing import Optional
 import requests
 
 from . import USER_AGENT
+from .netutil import control_session
 
 GUARDIAN_ENDPOINT = "https://vpn.mozilla.org"
 HTTP_TIMEOUT = 30
@@ -65,7 +66,7 @@ def _headers(access_token: str) -> dict:
 
 def fetch_proxy_pass(access_token: str, endpoint: str = GUARDIAN_ENDPOINT,
                      session: Optional[requests.Session] = None) -> ProxyPass:
-    sender = session or requests
+    sender = session or control_session()
     resp = sender.get(endpoint.rstrip("/") + "/api/v1/fpn/token",
                       headers=_headers(access_token), timeout=HTTP_TIMEOUT)
     if resp.status_code == 429:
@@ -93,7 +94,7 @@ def fetch_proxy_pass(access_token: str, endpoint: str = GUARDIAN_ENDPOINT,
 
 def activate(access_token: str, endpoint: str = GUARDIAN_ENDPOINT,
              session: Optional[requests.Session] = None) -> dict:
-    sender = session or requests
+    sender = session or control_session()
     resp = sender.post(endpoint.rstrip("/") + "/api/v1/fpn/activate",
                        headers=_headers(access_token), timeout=HTTP_TIMEOUT)
     if resp.status_code != 200:
@@ -103,7 +104,7 @@ def activate(access_token: str, endpoint: str = GUARDIAN_ENDPOINT,
 
 def status(access_token: str, endpoint: str = GUARDIAN_ENDPOINT,
            session: Optional[requests.Session] = None) -> dict:
-    sender = session or requests
+    sender = session or control_session()
     resp = sender.get(endpoint.rstrip("/") + "/api/v1/fpn/status",
                       headers=_headers(access_token), timeout=HTTP_TIMEOUT)
     if resp.status_code != 200:

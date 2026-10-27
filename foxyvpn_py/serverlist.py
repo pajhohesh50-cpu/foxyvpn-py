@@ -10,6 +10,7 @@ from typing import Optional
 import requests
 
 from . import USER_AGENT
+from .netutil import control_session
 
 REMOTE_SETTINGS_URL = ("https://firefox.settings.services.mozilla.com/v1/buckets/main/"
                        "collections/vpn-serverlist/records")
@@ -29,7 +30,7 @@ class Endpoint:
 
 
 def fetch_server_list(session: Optional[requests.Session] = None) -> list[dict]:
-    sender = session or requests
+    sender = session or control_session()
     resp = sender.get(REMOTE_SETTINGS_URL, headers={"User-Agent": USER_AGENT,
                                                     "Accept": "application/json"}, timeout=30)
     resp.raise_for_status()

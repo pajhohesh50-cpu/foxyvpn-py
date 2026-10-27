@@ -1,4 +1,4 @@
-"""Glue: token management, proxy-pass renewal, upstream selection, SOCKS5 server."""
+"""Glue: token management, proxy-pass renewal, upstream selection, SOCKS5/HTTP server."""
 
 from __future__ import annotations
 
@@ -11,6 +11,13 @@ from typing import Optional
 from . import fxa, guardian, serverlist, tokens
 from .h2tunnel import UpstreamPool
 from .socks import serve
+
+# ماژول مدیریت پروکسی سیستم (فقط روی ویندوز کار می‌کند)
+try:
+    from . import sysproxy
+    _HAS_SYSPROXY = True
+except ImportError:
+    _HAS_SYSPROXY = False
 
 log = logging.getLogger("foxyvpn")
 
@@ -103,10 +110,18 @@ async def run(listen_host: str, listen_port: int, country: Optional[str], proxy:
     pool = UpstreamPool(endpoint.hostname, endpoint.port, keeper.header)
     server = await serve(listen_host, listen_port, pool.open_tunnel,
                          max_conns=max_conns, verbose=verbose)
-    log.info("SOCKS5 proxy listening on %s:%d", listen_host, listen_port)
+    log.info("SOCKS5/HTTP proxy listening on %s:%d", listen_host, listen_port)
+
+    # --- فعال‌سازی پروکسی سیستم (فقط روی ویندوز) ---
+    if _HAS_SYSPROXY:
+        sysproxy.enable_system_proxy(listen_host, listen_port)
+
     try:
         async with server:
             await server.serve_forever()
     finally:
+        # --- غیرفعال‌سازی پروکسی سیستم (فقط روی ویندوز) ---
+        if _HAS_SYSPROXY:
+            sysproxy.disable_system_proxy()
         await keeper.stop()
         await pool.aclose()
